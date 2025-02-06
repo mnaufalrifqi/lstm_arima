@@ -116,40 +116,13 @@ if model_choice == 'LSTM':
 
     # Plot the stock price prediction vs actual
     fig, ax = plt.subplots(figsize=(15, 7))
-    ax.plot(test.index[:-1], data['Close'][-len(y_test):], color='blue', label='Harga Aktual')
+    ax.plotax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
     ax.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')
     ax.set_xlabel('Tanggal')
     ax.set_ylabel('Harga Saham')
     ax.set_title('Harga Saham Prediksi vs Aktual (BMRI) LSTM', fontsize=20)
     ax.legend()
     st.pyplot(fig)
-
-    # Visualize the actual vs predicted stock prices
-fig, ax = plt.subplots(figsize=(15, 7))
-
-# Plot actual prices (entire data)
-ax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
-
-# Plot predicted prices (test data)
-ax.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')
-
-# Set labels and title
-ax.set_xlabel('Waktu')
-ax.set_ylabel('Harga Saham')
-ax.set_title('Prediksi Harga Saham BMRI LSTM', fontsize=20)
-
-# Format x-axis for dates
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # Date format on x-axis
-ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))    # Show label every 12 months
-
-# Rotate x-axis labels for better readability
-plt.xticks(rotation=30)
-
-# Add legend to distinguish between actual and predicted lines
-ax.legend()
-
-# Display the plot in Streamlit
-st.pyplot(fig)
 
     # Display prediction results in a table
     st.subheader("Predicted Stock Prices with Change Direction")
