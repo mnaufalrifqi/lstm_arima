@@ -70,7 +70,7 @@ if model_type == "ARIMA":
     
     # Build and fit ARIMA model
     model = ARIMA(train, order=(2, 1, 2))  # ARIMA(p,d,q) parameters
-    model_fit = arima_model.fit()
+    model_fit = model.fit()
     
     # Make forecast
     y_pred_diff = model_fit.forecast(steps=len(test))
