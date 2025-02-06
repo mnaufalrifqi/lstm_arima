@@ -111,18 +111,15 @@ st.write(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
 st.write(f"Mean Squared Error (MSE): {mse:.4f}")
 st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
-# Plot actual vs predicted
-st.subheader("Prediksi Harga Saham")
-fig, ax = plt.subplots(figsize=(15, 7))
-ax.plot(data.index, data['Close'], label='Harga Aktual', color='blue')
-ax.plot(test.index, y_pred, label='Harga Prediksi', color='red')
-ax.set_title("Prediksi Harga Saham dengan ARIMA")
-ax.set_xlabel("Waktu")
-ax.set_ylabel("Harga Saham")
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-ax.legend()
-st.pyplot(fig)
+ # Plot Predictions
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
+    ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
+    ax.set_title("Stock Price Prediction - ARIMA")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Close Price (IDR)")
+    ax.legend()
+    st.pyplot(fig)
     
 
 # LSTM Model
