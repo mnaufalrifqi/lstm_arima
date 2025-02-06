@@ -125,23 +125,27 @@ prediction_date = st.date_input('Pilih Tanggal untuk Prediksi', min_value=test.i
 # Convert the selected prediction date to a pandas Timestamp object
 prediction_date_ts = pd.Timestamp(prediction_date)
 
-# Find the index for the selected date
-prediction_date_index = test.index.get_loc(prediction_date_ts)
+# Ensure the prediction_date_ts is in the range of test.index
+if prediction_date_ts not in test.index:
+    st.write(f"Tanggal {prediction_date} tidak ada dalam data.")
+else:
+    # Find the index for the selected date in the test set
+    prediction_date_index = test.index.get_loc(prediction_date_ts)
 
-# Get the predicted value for the selected date
-predicted_value = y_pred[prediction_date_index]
+    # Get the predicted value for the selected date
+    predicted_value = y_pred[prediction_date_index]
 
-# Get the actual value for the selected date
-actual_value = y_test.iloc[prediction_date_index]
+    # Get the actual value for the selected date
+    actual_value = y_test.iloc[prediction_date_index]
 
-# Determine if the stock price is "Naik" or "Turun"
-price_change = predicted_value - actual_value
-price_change_percentage = (price_change / actual_value) * 100
-trend = "Naik" if price_change > 0 else "Turun"
+    # Determine if the stock price is "Naik" or "Turun"
+    price_change = predicted_value - actual_value
+    price_change_percentage = (price_change / actual_value) * 100
+    trend = "Naik" if price_change > 0 else "Turun"
 
-# Display the prediction result
-st.write(f"Prediksi Harga Saham pada {prediction_date}: {predicted_value:.2f} IDR")
-st.write(f"Harga Aktual pada {prediction_date}: {actual_value:.2f} IDR")
-st.write(f"Perubahan Harga: {price_change:.2f} IDR ({price_change_percentage:.2f}%)")
-st.write(f"Tren: {trend}")
+    # Display the prediction result
+    st.write(f"Prediksi Harga Saham pada {prediction_date}: {predicted_value:.2f} IDR")
+    st.write(f"Harga Aktual pada {prediction_date}: {actual_value:.2f} IDR")
+    st.write(f"Perubahan Harga: {price_change:.2f} IDR ({price_change_percentage:.2f}%)")
+    st.write(f"Tren: {trend}")
 
