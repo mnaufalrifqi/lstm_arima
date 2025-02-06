@@ -94,6 +94,15 @@ if model_type == "ARIMA":
     y_pred_diff = arima_fit.forecast(steps=len(test))
     y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
     y_test = data['Close'].iloc[train_size:]
+        # Plot Predictions
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
+    ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
+    ax.set_title("Stock Price Prediction - ARIMA")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Close Price (IDR)")
+    ax.legend()
+    st.pyplot(fig)
     
 
 # LSTM Model
