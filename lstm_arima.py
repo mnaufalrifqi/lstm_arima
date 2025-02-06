@@ -1,116 +1,88 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import pickle
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import yfinance as yf
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
+import streamlit as st 
+import appdirs as ad 
+ad.user_cache_dir = lambda *args: "/tmp" 
+import yfinance as yf 
+import numpy as np 
+import pandas as pd 
+from sklearn.preprocessing import MinMaxScaler 
+from tensorflow.keras.models import load_model 
+from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error, root_mean_squared_error
+import math 
+import plotly.graph_objects as go  
 from statsmodels.tsa.arima.model import ARIMA
-from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
+import pickle
 
-# Fungsi untuk memuat model ARIMA
-def load_arima_model():
-    with open("arima_model_3.pkl", "rb") as f:
-        model = pickle.load(f)
-    return model
+# Streamlit app
+def main():
+    st.title("Stock Price Prediction: ARIMA vs LSTM")
 
-# Fungsi untuk memuat model LSTM
-def load_lstm_model():
-    model = load_model("lstm_model.h5")
-    return model
+    # Sidebar for data download
+    st.sidebar.header("Data Download")
+    stock_symbol = st.sidebar.text_input("Enter Stock Symbol (e.g., BBCA.JK):", "BBCA.JK")
+    start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2019-01-01"))
+    end_date = st.sidebar.date_input("End Date", pd.to_datetime("2024-01-01"))
 
-# Fungsi untuk mengambil data saham
-def get_stock_data(ticker, start, end):
-    data = yf.download(ticker, start=start, end=end)
-    return data
+    # Download stock price data
+    data = yf.download(stock_symbol, start=start_date, end=end_date)
 
-# Streamlit UI
-st.title("Prediksi Harga Saham BMRI dengan ARIMA dan LSTM")
+    # Data preprocessing
+    close_prices = data['Close'].values.reshape(-1, 1)
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    scaled_data = scaler.fit_transform(close_prices)
 
-# Input user
-start_date = st.date_input("Pilih Tanggal Mulai", value=pd.to_datetime("2019-12-01"))
-end_date = st.date_input("Pilih Tanggal Akhir", value=pd.to_datetime("2024-12-01"))
+    # Sidebar for model selection
+    st.sidebar.header("Select Model")
+    model_type = st.sidebar.selectbox("Select Model Type:", ["LSTM", "ARIMA"])
 
-data_load_state = st.text("Mengambil data...")
-data = get_stock_data("BMRI.JK", start_date, end_date)
-data_load_state.text("Data berhasil dimuat!")
+    if model_type == "LSTM":
+        model = load_model("final_model_lstm.h5")
+        X, y = prepare_lstm_data(scaled_data, 120)
+        train_size = int(len(X) * 0.8)
+        X_train, X_test = X[:train_size], X[train_size:]
+        y_train, y_test = y[:train_size], y[train_size:]
+        X_test = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
+        y_pred = model.predict(X_test)
+        y_pred = scaler.inverse_transform(y_pred)
+    else:
+        train_size = int(len(close_prices) * 0.8)
+        train, test = close_prices[:train_size], close_prices[train_size:]
+        model = ARIMA(train, order=(2,1,2))
+        model_fit = model.fit()
+        y_pred_diff = model_fit.forecast(steps=len(test))
+        y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
 
-# Plot harga saham
-st.subheader("Harga Saham BMRI")
-st.line_chart(data[['Close']])
+    y_test_orig = data['Close'].iloc[train_size:]
 
-# Memuat model ARIMA
-arima_model = load_arima_model()
+    # Calculate metrics
+    mse = mean_squared_error(y_test_orig[:len(y_pred)], y_pred)
+    rmse = np.sqrt(mse)
+    mape = mean_absolute_percentage_error(y_test_orig[:len(y_pred)], y_pred)
+    mae = mean_absolute_error(y_test_orig[:len(y_pred)], y_pred)
 
-# Prediksi dengan ARIMA
-st.subheader("Prediksi Harga Saham dengan ARIMA")
-train_size = int(len(data) * 0.8)
-train, test = data['Close'][:train_size], data['Close'][train_size:]
-y_pred_arima = arima_model.forecast(steps=len(test))
+    # Display results
+    st.header(f"Results for {model_type} Model")
+    st.write("Mean Squared Error (MSE):", mse)
+    st.write("Root Mean Squared Error (RMSE):", rmse)
+    st.write("Mean Absolute Percentage Error (MAPE):", mape)
+    st.write("Mean Absolute Error (MAE):", mae)
 
-y_test = data['Close'][train_size:]
-plt.figure(figsize=(12, 6))
-plt.plot(data.index, data['Close'], label='Harga Aktual')
-plt.plot(test.index, y_pred_arima, label='Prediksi ARIMA', color='red')
-plt.xlabel('Tanggal')
-plt.ylabel('Harga Saham')
-plt.title('Prediksi Harga Saham dengan ARIMA')
-plt.legend()
-st.pyplot(plt)
+    # Visualize predictions
+    st.header("Visualize Predictions")
+    visualize_predictions(data, train_size, y_test_orig, y_pred)
 
-# Evaluasi ARIMA
-mae_arima = mean_absolute_error(y_test, y_pred_arima)
-mape_arima = mean_absolute_percentage_error(y_test, y_pred_arima)
-mse_arima = mean_squared_error(y_test, y_pred_arima)
-rmse_arima = np.sqrt(mse_arima)
+def prepare_lstm_data(data, n_steps):
+    X, y = [], []
+    for i in range(len(data) - n_steps):
+        X.append(data[i:(i + n_steps), 0])
+        y.append(data[i + n_steps, 0])
+    return np.array(X), np.array(y)
 
-st.write("Evaluasi Model ARIMA:")
-st.write(f"MAE: {mae_arima:.4f}")
-st.write(f"MAPE: {mape_arima:.4f}")
-st.write(f"MSE: {mse_arima:.4f}")
-st.write(f"RMSE: {rmse_arima:.4f}")
+def visualize_predictions(data, train_size, y_test_orig, y_pred):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=data.index[train_size:], y=y_test_orig[:len(y_pred)], mode='lines', name="Actual Stock Prices", line=dict(color='blue')))
+    fig.add_trace(go.Scatter(x=data.index[train_size:], y=y_pred, mode='lines', name="Predicted Stock Prices", line=dict(color='red')))
+    fig.update_layout(title="Stock Price Prediction", xaxis_title="Date", yaxis_title="Stock Price (IDR)", template='plotly_dark')
+    st.plotly_chart(fig)
 
-# Memuat model LSTM
-lstm_model = load_lstm_model()
-scaler = MinMaxScaler()
-data['Close_scaled'] = scaler.fit_transform(data[['Close']])
-
-# Persiapan data untuk LSTM
-train, test = data['Close_scaled'][:train_size], data['Close_scaled'][train_size:]
-X_test, y_test = [], []
-look_back = 1
-for i in range(len(test) - look_back):
-    X_test.append(test[i:(i + look_back)].values)
-    y_test.append(test[i + look_back])
-X_test = np.array(X_test).reshape(len(X_test), 1, look_back)
-y_test = np.array(y_test)
-
-# Prediksi dengan LSTM
-y_pred_lstm = lstm_model.predict(X_test)
-y_pred_lstm = scaler.inverse_transform(y_pred_lstm)
-
-# Visualisasi LSTM
-st.subheader("Prediksi Harga Saham dengan LSTM")
-plt.figure(figsize=(12, 6))
-plt.plot(data.index, data['Close'], label='Harga Aktual')
-plt.plot(test.index[look_back:], y_pred_lstm, label='Prediksi LSTM', color='green')
-plt.xlabel('Tanggal')
-plt.ylabel('Harga Saham')
-plt.title('Prediksi Harga Saham dengan LSTM')
-plt.legend()
-st.pyplot(plt)
-
-# Evaluasi LSTM
-mae_lstm = mean_absolute_error(y_test, y_pred_lstm)
-mape_lstm = mean_absolute_percentage_error(y_test, y_pred_lstm)
-mse_lstm = mean_squared_error(y_test, y_pred_lstm)
-rmse_lstm = np.sqrt(mse_lstm)
-
-st.write("Evaluasi Model LSTM:")
-st.write(f"MAE: {mae_lstm:.4f}")
-st.write(f"MAPE: {mape_lstm:.4f}")
-st.write(f"MSE: {mse_lstm:.4f}")
-st.write(f"RMSE: {rmse_lstm:.4f}")
+if __name__ == "__main__":
+    main()
