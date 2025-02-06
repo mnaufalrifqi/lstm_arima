@@ -100,16 +100,6 @@ rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 st.write("Mean Absolute Error (MAE):", round(mae, 4))
 st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
 
-    
-    # Plot Predictions
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
-    ax.plot(data.index[train_size:], y_pred, label='Predicted Price (ARIMA)', color='red')
-    ax.set_title("Stock Price Prediction - ARIMA")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Close Price (IDR)")
-    ax.legend()
-    st.pyplot(fig)
 
 # LSTM Model
 elif model_type == "LSTM":
