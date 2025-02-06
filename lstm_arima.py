@@ -65,7 +65,7 @@ train, test = data_diff[:train_size], data_diff[train_size:]
     
     # Fit ARIMA Model
     arima_model = ARIMA(train, order=(2,1,2))
-    arima_fit = arima_model.fit()
+    arima_fit = arima_model_1.fit()
     
     # Forecast
 y_pred_diff = arima_fit.forecast(steps=len(test))
