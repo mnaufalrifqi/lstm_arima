@@ -33,7 +33,6 @@ data = data[['Close']].dropna()
 st.sidebar.header("Select Model")
 model_type = st.sidebar.selectbox("Prediction Model:", ["ARIMA", "LSTM"])
 
-
 # Plot historical stock data
 st.subheader("Historical Stock Prices")
 fig, ax = plt.subplots(figsize=(12, 6))
@@ -82,7 +81,7 @@ rmse = np.sqrt(mse)
 st.write("Mean Absolute Error (MAE):", round(mae, 4))
 st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
     
-def plot_predictions():
+
     fig, ax = plt.subplots(figsize=(15, 7))
     ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
     ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
@@ -91,7 +90,6 @@ def plot_predictions():
     ax.set_ylabel("Close Price (IDR)")
     ax.legend()
     st.pyplot(fig)
-plot_predictions()
 
 # LSTM Model
 elif model_type == "LSTM":
