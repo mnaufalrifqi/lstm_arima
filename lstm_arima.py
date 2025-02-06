@@ -149,3 +149,4 @@ else:
     st.write(f"Perubahan Harga: {price_change:.2f} IDR ({price_change_percentage:.2f}%)")
     st.write(f"Tren: {trend}")
 
+
