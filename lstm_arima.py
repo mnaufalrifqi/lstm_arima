@@ -73,19 +73,14 @@ y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
 y_test = data['Close'].iloc[train_size:]
     
     # Metrics
-    # Ensure both arrays have the same length
-min_len = min(len(y_test), len(y_pred))
-y_test = y_test[:min_len]
-y_pred = y_pred[:min_len]
-
-# Metrics for evaluation
+    # Metrics for evaluation
 mae = mean_absolute_error(y_test, y_pred)
 mape = mean_absolute_percentage_error(y_test, y_pred)
 mse = mean_squared_error(y_test, y_pred)
 rmse = np.sqrt(mse)
-    
-    st.write("Mean Absolute Error (MAE):", round(mae, 4))
-    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
+
+st.write("Mean Absolute Error (MAE):", round(mae, 4))
+st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
     
     # Plot Predictions
     fig, ax = plt.subplots(figsize=(12, 6))
