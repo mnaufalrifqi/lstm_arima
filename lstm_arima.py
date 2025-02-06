@@ -48,73 +48,46 @@ st.pyplot(fig)
 # ARIMA Model
 if model_type == "ARIMA":
     st.subheader("ARIMA Model Prediction")
-
-# ARIMA Model
-if model_type == "ARIMA":
-    st.subheader("ARIMA Model Prediction")
     
     # Perform Dickey-Fuller Test
-    def perform_dickey_fuller(series):
+    def check_stationarity(series):
         result = adfuller(series)
-        st.write("Dickey-Fuller Test Results:")
-        st.write(f"Test Statistic: {result[0]:.4f}")
-        st.write(f"p-value: {result[1]:.4f}")
-        st.write("Critical Values:")
-        for key, value in result[4].items():
-            st.write(f"   {key}: {value:.4f}")
-        if result[1] > 0.05:
-            st.write("The data is not stationary.")
-        else:
-            st.write("The data is stationary.")
-
-    perform_dickey_fuller(data['Close'])
-
-    # Check for stationarity
-    adf_test = adfuller(data['Close'])
-    p_value = adf_test[1]
-
-    if p_value > 0.05:
-        st.write("Data tidak stasioner, melakukan differencing...")
-        data_diff = data['Close'].diff().dropna()  # First differencing
-        perform_dickey_fuller(data_diff)
+        return result[1] < 0.05  # Returns True if stationary
+    
+    is_stationary = check_stationarity(data['Close'])
+    if not is_stationary:
+        data_diff = data['Close'].diff().dropna()
     else:
-        st.write("Data sudah stasioner.")
         data_diff = data['Close']
-
-    # Plot differenced data
+    
+    # Split data
+    train_size = int(len(data) * 0.8)
+    train, test = data[:train_size], data[train_size:]
+    
+    # Fit ARIMA Model
+    arima_model = ARIMA(train, order=(2,1,2))
+    arima_fit = arima_model.fit()
+    
+    # Forecast
+    y_pred = arima_fit.forecast(steps=len(test))
+    y_test = test['Close'].values
+    
+    # Metrics
+    mae = mean_absolute_error(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    
+    st.write("Mean Absolute Error (MAE):", round(mae, 4))
+    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
+    
+    # Plot Predictions
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data_diff.index, data_diff, color='orange', label='Differenced Data')
-    ax.set_title('Differenced Data')
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Differenced Close Price')
+    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
+    ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
+    ax.set_title("Stock Price Prediction - ARIMA")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Close Price (IDR)")
     ax.legend()
     st.pyplot(fig)
-
-      # Prediction and Evaluation for ARIMA
-    if model_type == "ARIMA":
-        y_pred_arima = arima_model_fit.forecast(steps=len(test))
-        y_test_arima = data['Close'].iloc[train_size:]
-        
-        # Calculate ARIMA model metrics
-        mae_arima = mean_absolute_error(y_test_arima, y_pred_arima)
-        mape_arima = mean_absolute_percentage_error(y_test_arima, y_pred_arima)
-        mse_arima = mean_squared_error(y_test_arima, y_pred_arima)
-        rmse_arima = np.sqrt(mse_arima)
-
-        # Display ARIMA model results
-        st.header(f"ARIMA Model Results")
-        st.write("Mean Absolute Error (MAE):", mae_arima)
-        st.write("Mean Absolute Percentage Error (MAPE):", mape_arima)
-        st.write("Mean Squared Error (MSE):", mse_arima)
-        st.write("Root Mean Squared Error (RMSE):", rmse_arima)
-
-        # Visualize ARIMA predictions
-        st.header("Visualize ARIMA Predictions")
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=data.index[train_size:], y=y_test_arima, mode='lines', name="Actual Stock Prices", line=dict(color='blue')))
-        fig.add_trace(go.Scatter(x=data.index[train_size:], y=y_pred_arima, mode='lines', name="Predicted Stock Prices", line=dict(color='red')))
-        fig.update_layout(title="ARIMA Stock Price Prediction", xaxis_title="Date", yaxis_title="Stock Price", template='plotly_dark')
-        st.plotly_chart(fig)
 
 # LSTM Model
 elif model_type == "LSTM":
