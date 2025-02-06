@@ -124,15 +124,36 @@ if model_choice == 'LSTM':
     ax.legend()
     st.pyplot(fig)
 
+    # Visualize the actual vs predicted stock prices
+fig, ax = plt.subplots(figsize=(15, 7))
+
+# Plot actual prices (entire data)
+ax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
+
+# Plot predicted prices (test data)
+ax.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')
+
+# Set labels and title
+ax.set_xlabel('Waktu')
+ax.set_ylabel('Harga Saham')
+ax.set_title('Prediksi Harga Saham BMRI LSTM', fontsize=20)
+
+# Format x-axis for dates
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # Date format on x-axis
+ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))    # Show label every 12 months
+
+# Rotate x-axis labels for better readability
+plt.xticks(rotation=30)
+
+# Add legend to distinguish between actual and predicted lines
+ax.legend()
+
+# Display the plot in Streamlit
+st.pyplot(fig)
+
     # Display prediction results in a table
     st.subheader("Predicted Stock Prices with Change Direction")
     st.write(predictions_df)
-
-    # Display predictions as a list
-    st.subheader("Predicted Stock Prices (List Format)")
-    predictions_list = predictions_df[['Tanggal', 'Harga Prediksi', 'Tren']].values.tolist()
-    for row in predictions_list:
-        st.write(f"Tanggal: {row[0]}, Harga Prediksi: {row[1]:.2f}, Tren: {row[2]}")
 
 elif model_choice == 'ARIMA':
     st.subheader("ARIMA Model")
