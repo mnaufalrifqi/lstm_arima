@@ -77,12 +77,29 @@ if model_type == "ARIMA":
     y_pred = last_price + np.cumsum(y_pred_diff)  # Add the cumulative sum of the differenced predictions to the last known price
     y_test = data['Close'].iloc[train_size:].values  # Actual test data (prices)
     
-    # Metrics
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-    
-    st.write("Mean Absolute Error (MAE):", round(mae, 4))
-    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
+    # Cek apakah ada NaN atau Infinity
+if np.any(np.isnan(y_test)) or np.any(np.isnan(y_pred)):
+    st.warning("Data contains NaN values. Please check the data.")
+    y_test = np.nan_to_num(y_test)  # Menggantikan NaN dengan 0 atau nilai lainnya
+    y_pred = np.nan_to_num(y_pred)
+
+if np.any(np.isinf(y_test)) or np.any(np.isinf(y_pred)):
+    st.warning("Data contains infinity values. Please check the data.")
+    y_test = np.where(np.isinf(y_test), 0, y_test)  # Gantikan inf dengan 0
+    y_pred = np.where(np.isinf(y_pred), 0, y_pred)
+
+# Pastikan data dalam format 1D
+y_test = y_test.flatten()
+y_pred = y_pred.flatten()
+
+# Hitung MAE dan RMSE
+mae = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+# Tampilkan hasil evaluasi
+st.write("Mean Absolute Error (MAE):", round(mae, 4))
+st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
+
     
     # Plot Predictions
     fig, ax = plt.subplots(figsize=(12, 6))
