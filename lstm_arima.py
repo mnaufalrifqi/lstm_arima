@@ -59,30 +59,29 @@ if model_type == "ARIMA":
     else:
         data_diff = data['Close']
     
-train_size = int(len(data_diff) * 0.8)
-train, test = data_diff[:train_size], data_diff[train_size:]
+    train_size = int(len(data_diff) * 0.8)
+    train, test = data_diff[:train_size], data_diff[train_size:]
     
     # Fit ARIMA Model
-model = ARIMA(train, order=(2,1,2))
-model_fit = model.fit()
+    model = ARIMA(train, order=(2,1,2))
+    model_fit = model.fit()
     
     # Forecast
-y_pred_diff = model_fit.forecast(steps=len(test))
-y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
-y_test = data['Close'].iloc[train_size:]
+    y_pred_diff = model_fit.forecast(steps=len(test))
+    y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
+    y_test = data['Close'].iloc[train_size:]
     
-    # Metrics
     # Metrics for evaluation
-mae = mean_absolute_error(y_test, y_pred)
-mape = mean_absolute_percentage_error(y_test, y_pred)
-mse = mean_squared_error(y_test, y_pred)
-rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
 
-st.write("Mean Absolute Error (MAE):", round(mae, 4))
-st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
+    st.write("Mean Absolute Error (MAE):", round(mae, 4))
+    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
     
-
-def plot_predictions():
+    # Plot Predictions
+    def plot_predictions():
         fig, ax = plt.subplots(figsize=(15, 7))
         ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
         ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
@@ -92,6 +91,7 @@ def plot_predictions():
         ax.legend()
         st.pyplot(fig)
 
+    plot_predictions()
 
 # LSTM Model
 elif model_type == "LSTM":
