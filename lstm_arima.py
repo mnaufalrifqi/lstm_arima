@@ -77,7 +77,7 @@ if model_type == "ARIMA":
     y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()  # Convert back to original price level
     y_test = data['Close'].iloc[train_size:]
 
-   # Ensure both arrays have the same length
+  # Ensure both arrays have the same length
 min_len = min(len(y_test), len(y_pred))
 y_test = y_test[:min_len]
 y_pred = y_pred[:min_len]
@@ -106,16 +106,15 @@ st.write("Mean Absolute Percentage Error (MAPE):", round(mape, 4))
 st.write("Mean Squared Error (MSE):", round(mse, 4))
 st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
 
-    
-    # Plot Predictions vs Actuals
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
-    ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
-    ax.set_title("Stock Price Prediction - ARIMA")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Close Price (IDR)")
-    ax.legend()
-    st.pyplot(fig)
+# Ensure correct indentation for plotting
+fig, ax = plt.subplots(figsize=(12, 6))  # Corrected indentation
+ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
+ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
+ax.set_title("Stock Price Prediction - ARIMA")
+ax.set_xlabel("Date")
+ax.set_ylabel("Close Price (IDR)")
+ax.legend()
+st.pyplot(fig)
 
 
 # LSTM Model
