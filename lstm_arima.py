@@ -111,7 +111,7 @@ st.write(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
 st.write(f"Mean Squared Error (MSE): {mse:.4f}")
 st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
- # Plot Predictions
+     # Plot Predictions
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
     ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
