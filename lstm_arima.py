@@ -90,66 +90,31 @@ if model_type == "ARIMA":
     ax.legend()
     st.pyplot(fig)
 
-    # Splitting the dataset into training and testing sets
-    train_size = int(len(data_diff) * 0.8)
-    train, test = data_diff[:train_size], data_diff[train_size:]
-    st.write("Train Data Sample:", train.head(10))
-    st.write("Test Data Sample:", test.head(10))
+      # Prediction and Evaluation for ARIMA
+    if model_type == "ARIMA":
+        y_pred_arima = arima_model_fit.forecast(steps=len(test))
+        y_test_arima = data['Close'].iloc[train_size:]
+        
+        # Calculate ARIMA model metrics
+        mae_arima = mean_absolute_error(y_test_arima, y_pred_arima)
+        mape_arima = mean_absolute_percentage_error(y_test_arima, y_pred_arima)
+        mse_arima = mean_squared_error(y_test_arima, y_pred_arima)
+        rmse_arima = np.sqrt(mse_arima)
 
-    # Building the ARIMA model with optimized order
-    model = ARIMA(train, order=(2, 1, 2))
-    model_fit = model.fit()
-    st.write(model_fit.summary())
+        # Display ARIMA model results
+        st.header(f"ARIMA Model Results")
+        st.write("Mean Absolute Error (MAE):", mae_arima)
+        st.write("Mean Absolute Percentage Error (MAPE):", mape_arima)
+        st.write("Mean Squared Error (MSE):", mse_arima)
+        st.write("Root Mean Squared Error (RMSE):", rmse_arima)
 
-    # Making predictions
-    y_pred_diff = model_fit.forecast(steps=len(test))
-    y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
-    y_test = data['Close'].iloc[train_size:]
-    st.write("Predicted Prices:", y_pred)
-
-    # Ensure both arrays have the same length
-    min_len = min(len(y_test), len(y_pred))
-    y_test = y_test[:min_len]
-    y_pred = y_pred[:min_len]
-
-    # Metrics for evaluation
-    mae = mean_absolute_error(y_test, y_pred)
-    mape = mean_absolute_percentage_error(y_test, y_pred)
-    mse = mean_squared_error(y_test, y_pred)
-    rmse = np.sqrt(mse)
-
-    st.write("Mean Absolute Error (MAE):", round(mae, 4))
-    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
-    
-    # Plotting actual vs predicted prices
-    fig, ax = plt.subplots(figsize=(15, 7))
-    ax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
-    ax.plot(test.index, y_pred, color='red', label='Harga Prediksi')
-
-    # Formatting the plot
-    ax.set_xlabel('Waktu')
-    ax.set_ylabel('Harga Saham')
-    ax.set_title('Prediksi Harga Saham dengan ARIMA (Optimized)', fontsize=20)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-    plt.xticks(rotation=30)
-    ax.legend()
-
-    st.pyplot(fig)
-
-    # Displaying metrics
-    metrics = {
-        'MAE': mae,
-        'MAPE': mape,
-        'MSE': mse,
-        'RMSE': rmse
-    }
-
-    # Output metrics
-    for metric, value in metrics.items():
-        st.write(f"{metric}: {value:.4f}")
-
-    
+        # Visualize ARIMA predictions
+        st.header("Visualize ARIMA Predictions")
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=data.index[train_size:], y=y_test_arima, mode='lines', name="Actual Stock Prices", line=dict(color='blue')))
+        fig.add_trace(go.Scatter(x=data.index[train_size:], y=y_pred_arima, mode='lines', name="Predicted Stock Prices", line=dict(color='red')))
+        fig.update_layout(title="ARIMA Stock Price Prediction", xaxis_title="Date", yaxis_title="Stock Price", template='plotly_dark')
+        st.plotly_chart(fig)
 
 # LSTM Model
 elif model_type == "LSTM":
