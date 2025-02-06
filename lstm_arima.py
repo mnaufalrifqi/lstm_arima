@@ -93,6 +93,13 @@ if model_type == "ARIMA":
         st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
     except Exception as e:
         st.write(f"Error calculating metrics: {e}")
+
+    # Check for NaN or Inf values in y_pred and y_test
+if y_pred.isnull().any() or np.isnan(y_pred).any():
+    st.write("Warning: Predicted values contain NaN or Inf.")
+if y_test.isnull().any() or np.isnan(y_test.values).any():
+    st.write("Warning: Actual values contain NaN or Inf.")
+
     
     # Plot Predictions
     def plot_predictions():
