@@ -77,51 +77,54 @@ if model_type == "ARIMA":
     y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()  # Convert back to original price level
     y_test = data['Close'].iloc[train_size:]
 
-  # Ensure both arrays have the same length
-min_len = min(len(y_test), len(y_pred))
-y_test = y_test[:min_len]
-y_pred = y_pred[:min_len]
+    # Ensure both arrays have the same length
+    min_len = min(len(y_test), len(y_pred))
+    y_test = y_test[:min_len]
+    y_pred = y_pred[:min_len]
 
-# Flatten the arrays to ensure they are 1D
-y_test = y_test.flatten()  # Ensure y_test is a 1D array
-y_pred = y_pred.flatten()  # Ensure y_pred is a 1D array
+    # Flatten the arrays to ensure they are 1D
+    y_test = y_test.flatten()  # Ensure y_test is a 1D array
+    y_pred = y_pred.flatten()  # Ensure y_pred is a 1D array
 
-# Handle NaN or infinite values
-y_test = np.nan_to_num(y_test)  # Replace NaN or inf with 0
-y_pred = np.nan_to_num(y_pred)  # Replace NaN or inf with 0
+    # Handle NaN or infinite values
+    y_test = np.nan_to_num(y_test)  # Replace NaN or inf with 0
+    y_pred = np.nan_to_num(y_pred)  # Replace NaN or inf with 0
 
-# Convert to float64 if necessary
-y_test = np.array(y_test, dtype=np.float64)
-y_pred = np.array(y_pred, dtype=np.float64)
+    # Convert to float64 if necessary
+    y_test = np.array(y_test, dtype=np.float64)
+    y_pred = np.array(y_pred, dtype=np.float64)
 
-# Calculate evaluation metrics
-mae = mean_absolute_error(y_test, y_pred)
-mape = mean_absolute_percentage_error(y_test, y_pred)
-mse = mean_squared_error(y_test, y_pred)
-rmse = np.sqrt(mse)
+    # Calculate evaluation metrics
+    mae = mean_absolute_error(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
 
-# Display metrics
-st.write("Mean Absolute Error (MAE):", round(mae, 4))
-st.write("Mean Absolute Percentage Error (MAPE):", round(mape, 4))
-st.write("Mean Squared Error (MSE):", round(mse, 4))
-st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
+    # Display metrics
+    st.write("Mean Absolute Error (MAE):", round(mae, 4))
+    st.write("Mean Absolute Percentage Error (MAPE):", round(mape, 4))
+    st.write("Mean Squared Error (MSE):", round(mse, 4))
+    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
 
-# Ensure correct indentation for plotting
-fig, ax = plt.subplots(figsize=(12, 6))  # Corrected indentation
-ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
-ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
-ax.set_title("Stock Price Prediction - ARIMA")
-ax.set_xlabel("Date")
-ax.set_ylabel("Close Price (IDR)")
-ax.legend()
-st.pyplot(fig)
+    # Ensure correct indentation for plotting
+    fig, ax = plt.subplots(figsize=(12, 6))  # Corrected indentation
+    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
+    ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
+    ax.set_title("Stock Price Prediction - ARIMA")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Close Price (IDR)")
+    ax.legend()
+    st.pyplot(fig)
 
-
-# LSTM Model
+# LSTM Model (this will not execute unless model_type is set to "LSTM")
 elif model_type == "LSTM":
     st.subheader("LSTM Model Prediction")
     
     # Normalize Data
+    from sklearn.preprocessing import MinMaxScaler
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import LSTM, Dropout, Dense
+    
     scaler = MinMaxScaler()
     data['Close_scaled'] = scaler.fit_transform(data[['Close']])
     
@@ -148,4 +151,4 @@ elif model_type == "LSTM":
     actual_price = data['Close'].iloc[-1]
     trend = "Up" if predicted_price > actual_price else "Down"
     
-    st.write(f"Predicted Price on {prediction_date}: {predicted_price:.2f} IDR ({trend})")
+    st.write(f"Predicted Price on {start_date}: {predicted_price:.2f} IDR ({trend})")
