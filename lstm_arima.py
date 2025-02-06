@@ -33,9 +33,6 @@ data = data[['Close']].dropna()
 st.sidebar.header("Select Model")
 model_type = st.sidebar.selectbox("Prediction Model:", ["ARIMA", "LSTM"])
 
-# User selects a date for prediction
-st.sidebar.header("Select Prediction Date")
-prediction_date = st.sidebar.date_input("Select a Date", pd.to_datetime("2024-06-01"))
 
 # Plot historical stock data
 st.subheader("Historical Stock Prices")
@@ -98,14 +95,6 @@ if model_type == "ARIMA":
     y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
     y_test = data['Close'].iloc[train_size:]
     
-    # Find predicted price for selected date
-    if prediction_date in y_pred.index:
-        predicted_price = y_pred.loc[prediction_date]
-        actual_price = data['Close'].iloc[-1]
-        trend = "Up" if predicted_price > actual_price else "Down"
-        st.write(f"Predicted Price on {prediction_date}: {predicted_price:.2f} IDR ({trend})")
-    else:
-        st.write("Selected date is out of forecast range.")
 
 # LSTM Model
 elif model_type == "LSTM":
