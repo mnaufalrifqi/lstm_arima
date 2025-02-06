@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.stattools import adfuller
 from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 import streamlit as st
@@ -148,5 +149,3 @@ else:
     st.write(f"Harga Aktual pada {prediction_date}: {actual_value:.2f} IDR")
     st.write(f"Perubahan Harga: {price_change:.2f} IDR ({price_change_percentage:.2f}%)")
     st.write(f"Tren: {trend}")
-
-
