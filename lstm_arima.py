@@ -48,61 +48,81 @@ st.pyplot(fig)
 # ARIMA Model
 if model_type == "ARIMA":
     st.subheader("ARIMA Model Prediction")
-    
-    # Perform Dickey-Fuller Test
-    def check_stationarity(series):
-        result = adfuller(series)
-        return result[1] < 0.05  # Returns True if stationary
-    
-    is_stationary = check_stationarity(data['Close'])
-    if not is_stationary:
-        data_diff = data['Close'].diff().dropna()
-    else:
-        data_diff = data['Close']
-    
-    # Plot differenced data
-    st.subheader("Differenced Data")
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data_diff.index, data_diff, label='Differenced Data', color='orange')
-    ax.set_title("Differenced Data")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Differenced Close Price")
-    ax.legend()
-    st.pyplot(fig)
-    
-    # ACF and PACF plots
-    st.subheader("ACF and PACF Plots")
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    plot_acf(data_diff, lags=20, ax=ax[0])
-    ax[0].set_title("Autocorrelation Function (ACF)")
-    plot_pacf(data_diff, lags=20, ax=ax[1])
-    ax[1].set_title("Partial Autocorrelation Function (PACF)")
-    st.pyplot(fig)
-    
-    # Split data
-    train_size = int(len(data) * 0.8)
-    train, test = data[:train_size], data[train_size:]
-    
-    # Fit ARIMA Model
-    arima_model = ARIMA(train, order=(2,1,2))
-    arima_fit = arima_model.fit()
-    
-    st.text("ARIMA Model Summary:")
-    st.text(arima_fit.summary())
-    
-    # Forecast
-    y_pred_diff = arima_fit.forecast(steps=len(test))
-    y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
-    y_test = data['Close'].iloc[train_size:]
-        # Plot Predictions
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
-    ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
-    ax.set_title("Stock Price Prediction - ARIMA")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Close Price (IDR)")
-    ax.legend()
-    st.pyplot(fig)
+
+# Perform Dickey-Fuller test
+def check_stationarity(series):
+    result = adfuller(series)
+    return result[1] < 0.05  # Returns True if stationary
+
+st.subheader("Uji Stasioneritas")
+if not check_stationarity(data['Close']):
+    data_diff = data['Close'].diff().dropna()
+    st.write("Data tidak stasioner, melakukan differencing...")
+else:
+    data_diff = data['Close']
+    st.write("Data sudah stasioner.")
+
+# Plot differenced data
+st.subheader("Plot Data Setelah Differencing")
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(data_diff, color='orange', label='Differenced Data')
+ax.set_title("Differenced Data")
+ax.set_xlabel("Date")
+ax.set_ylabel("Differenced Close Price")
+ax.legend()
+st.pyplot(fig)
+
+# Splitting the dataset
+train_size = int(len(data_diff) * 0.8)
+train, test = data_diff[:train_size], data_diff[train_size:]
+
+# Display ACF & PACF
+st.subheader("ACF & PACF")
+fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+plot_acf(train, lags=20, ax=axes[0])
+axes[0].set_title("Autocorrelation Function (ACF)")
+plot_pacf(train, lags=20, ax=axes[1], method='ywm')
+axes[1].set_title("Partial Autocorrelation Function (PACF)")
+st.pyplot(fig)
+
+# Train ARIMA model
+st.subheader("Model ARIMA")
+model = ARIMA(train, order=(2,1,2))
+model_fit = model.fit()
+st.text(model_fit.summary())
+
+# Forecasting
+y_pred_diff = model_fit.forecast(steps=len(test))
+y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
+y_test = data['Close'].iloc[train_size:]
+
+# Ensure both arrays have the same length
+y_test, y_pred = y_test[:len(y_pred)], y_pred[:len(y_test)]
+
+# Metrics
+mae = mean_absolute_error(y_test, y_pred)
+mape = mean_absolute_percentage_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+
+st.subheader("Evaluasi Model")
+st.write(f"Mean Absolute Error (MAE): {mae:.4f}")
+st.write(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
+st.write(f"Mean Squared Error (MSE): {mse:.4f}")
+st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+
+# Plot actual vs predicted
+st.subheader("Prediksi Harga Saham")
+fig, ax = plt.subplots(figsize=(15, 7))
+ax.plot(data.index, data['Close'], label='Harga Aktual', color='blue')
+ax.plot(test.index, y_pred, label='Harga Prediksi', color='red')
+ax.set_title("Prediksi Harga Saham dengan ARIMA")
+ax.set_xlabel("Waktu")
+ax.set_ylabel("Harga Saham")
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
+ax.legend()
+st.pyplot(fig)
     
 
 # LSTM Model
