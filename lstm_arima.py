@@ -114,26 +114,32 @@ if model_choice == 'LSTM':
     st.write(f"MSE: {mse:.2f}")
     st.write(f"RMSE: {rmse:.2f}")
 
-    # Plot the stock price prediction vs actual
-    fig, ax = plt.subplots(figsize=(15, 7))
-    ax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
-    ax.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')
-    ax.set_xlabel('Tanggal')
-    ax.set_ylabel('Harga Saham')
-    ax.set_title('Harga Saham Prediksi vs Aktual (BMRI) LSTM', fontsize=20)
-    ax.legend()
+    # Visualize the comparison of actual vs predicted stock prices in Streamlit
+    fig = plt.figure(figsize=(15, 7))
+    plt.plot(data.index, data['Close'], color='blue', label='Harga Aktual')  # Plot actual prices (entire data)
+    plt.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')  # Plot predicted prices (test data)
+
+    # Set labels and title
+    plt.xlabel('Waktu')
+    plt.ylabel('Harga Saham')
+    plt.title('Prediksi Harga Saham BMRI LSTM', fontsize=20)
+
+    # Format x-axis for dates
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # Date format on x-axis
+    plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))    # Show label every 12 months
+
+    # Rotate x-axis labels for better readability
+    plt.xticks(rotation=30)
+
+    # Add legend to distinguish between actual and predicted lines
+    plt.legend()
+
+    # Display the plot in Streamlit
     st.pyplot(fig)
 
     # Display prediction results in a table
     st.subheader("Predicted Stock Prices with Change Direction")
     st.write(predictions_df)
-
-    # Display predictions as a list
-    st.subheader("Predicted Stock Prices (List Format)")
-    predictions_list = predictions_df[['Tanggal', 'Harga Prediksi', 'Tren']].values.tolist()
-    for row in predictions_list:
-        st.write(f"Tanggal: {row[0]}, Harga Prediksi: {row[1]:.2f}, Tren: {row[2]}")
-
 
 elif model_choice == 'ARIMA':
     st.subheader("ARIMA Model")
@@ -248,8 +254,8 @@ elif model_choice == 'ARIMA':
     # Displaying the plot in Streamlit
     st.pyplot(fig)
 
-    # Displaying predictions in a list
-    st.subheader("Predicted Stock Prices")
+    # Displaying predictions in a table
+    st.subheader("Predicted Stock Prices with Change Direction")
     predicted_prices = pd.DataFrame({
         'Date': test.index,
         'Predicted Price': y_pred
