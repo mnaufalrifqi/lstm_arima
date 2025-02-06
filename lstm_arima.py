@@ -151,10 +151,10 @@ ax.legend()
 # Display the plot in Streamlit
 st.pyplot(fig)
 
-    # Display prediction results in a table
-    st.subheader("Predicted Stock Prices with Change Direction")
-    st.write(predictions_df)
-    predictions_list = predictions_df[['Tanggal', 'Harga Prediksi', 'Tren']].values.tolist()
+# Display prediction results in a table
+st.subheader("Predicted Stock Prices with Change Direction")
+st.write(predictions_df)
+
 
 elif model_choice == 'ARIMA':
     st.subheader("ARIMA Model")
