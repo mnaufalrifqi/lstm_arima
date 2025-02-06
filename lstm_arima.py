@@ -96,27 +96,6 @@ if model_type == "ARIMA":
     st.write("Train Data Sample:", train.head(10))
     st.write("Test Data Sample:", test.head(10))
 
-    # Calculate and display ACF and PACF values
-    acf_values = acf(train, nlags=20)
-    pacf_values = pacf(train, nlags=20, method='ywm')
-    st.write("ACF Values:")
-    for i, v in enumerate(acf_values):
-        st.write(f"Lag {i}: {v:.4f}")
-
-    st.write("\nPACF Values:")
-    for i, v in enumerate(pacf_values):
-        st.write(f"Lag {i}: {v:.4f}")
-
-    # Plot ACF and PACF with lag values
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-    plot_acf(train, lags=20, ax=axes[0])
-    axes[0].set_title('ACF (Autocorrelation Function)')
-
-    plot_pacf(train, lags=20, ax=axes[1], method='ywm')
-    axes[1].set_title('PACF (Partial Autocorrelation Function)')
-
-    st.pyplot(fig)
-
     # Building the ARIMA model with optimized order
     model = ARIMA(train, order=(2, 1, 2))
     model_fit = model.fit()
