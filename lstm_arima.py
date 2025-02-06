@@ -122,8 +122,11 @@ st.pyplot(fig)
 st.subheader('Prediksi pada Tanggal Tertentu')
 prediction_date = st.date_input('Pilih Tanggal untuk Prediksi', min_value=test.index.min(), max_value=test.index.max(), value=test.index[0])
 
+# Convert the selected prediction date to a pandas Timestamp object
+prediction_date_ts = pd.Timestamp(prediction_date)
+
 # Find the index for the selected date
-prediction_date_index = test.index.get_loc(prediction_date)
+prediction_date_index = test.index.get_loc(prediction_date_ts)
 
 # Get the predicted value for the selected date
 predicted_value = y_pred[prediction_date_index]
@@ -141,3 +144,4 @@ st.write(f"Prediksi Harga Saham pada {prediction_date}: {predicted_value:.2f} ID
 st.write(f"Harga Aktual pada {prediction_date}: {actual_value:.2f} IDR")
 st.write(f"Perubahan Harga: {price_change:.2f} IDR ({price_change_percentage:.2f}%)")
 st.write(f"Tren: {trend}")
+
