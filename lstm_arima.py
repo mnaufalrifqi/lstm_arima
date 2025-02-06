@@ -112,17 +112,16 @@ st.write(f"Mean Squared Error (MSE): {mse:.4f}")
 st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
     # Plot predictions
-    st.subheader("Grafik Prediksi Harga Saham")
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
-    ax.plot(test.index, y_pred, color='red', label='Harga Prediksi')
-    ax.set_title("Prediksi Harga Saham - ARIMA")
-    ax.set_xlabel("Tanggal")
-    ax.set_ylabel("Harga Saham")
-    ax.legend()
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-    plt.xticks(rotation=30)
+# Plot hasil prediksi
+st.subheader("Grafik Prediksi Harga Saham")
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(df.index, df["Close"], label="Harga Aktual", color="blue")
+ax.plot(test.index, y_pred, label="Harga Prediksi", color="red", linestyle="dashed")
+ax.set_title("Prediksi Harga Saham dengan ARIMA")
+ax.set_xlabel("Tanggal")
+ax.set_ylabel("Harga Saham")
+ax.legend()
     st.pyplot(fig)
     
 
