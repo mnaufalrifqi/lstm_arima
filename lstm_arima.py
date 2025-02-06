@@ -60,56 +60,55 @@ if model_type == "ARIMA":
         data_diff = data['Close']
     
     # Splitting the dataset into training and testing sets
-train_size = int(len(data_diff) * 0.8)
-train, test = data_diff[:train_size], data_diff[train_size:]
+    train_size = int(len(data_diff) * 0.8)
+    train, test = data_diff[:train_size], data_diff[train_size:]
+    
+    # Building the ARIMA model with optimized order (2,1,2)
+    model = ARIMA(train, order=(2, 1, 2))
+    model_fit = model.fit()
 
-# Building the ARIMA model with optimized order (2,1,2)
-model = ARIMA(train, order=(2, 1, 2))
-model_fit = model.fit()
+    # Summary of ARIMA model
+    st.write("ARIMA Model Summary:")
+    st.text(model_fit.summary())
 
-# Summary of ARIMA model
-st.write("ARIMA Model Summary:")
-st.text(model_fit.summary())
+    # Making predictions
+    y_pred_diff = model_fit.forecast(steps=len(test))
+    y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()  # Reverting the differencing
+    y_test = data['Close'].iloc[train_size:]
 
-# Making predictions
-y_pred_diff = model_fit.forecast(steps=len(test))
-y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()  # Reverting the differencing
-y_test = data['Close'].iloc[train_size:]
+    # Ensure both arrays have the same length
+    min_len = min(len(y_test), len(y_pred))
+    y_test = y_test[:min_len]
+    y_pred = y_pred[:min_len]
 
-# Ensure both arrays have the same length
-min_len = min(len(y_test), len(y_pred))
-y_test = y_test[:min_len]
-y_pred = y_pred[:min_len]
+    # Metrics for evaluation
+    mae = mean_absolute_error(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
 
-# Metrics for evaluation
-mae = mean_absolute_error(y_test, y_pred)
-mape = mean_absolute_percentage_error(y_test, y_pred)
-mse = mean_squared_error(y_test, y_pred)
-rmse = np.sqrt(mse)
+    # Displaying metrics in Streamlit
+    st.write(f"Mean Absolute Error (MAE): {mae:.4f}")
+    st.write(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
+    st.write(f"Mean Squared Error (MSE): {mse:.4f}")
+    st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
-# Displaying metrics in Streamlit
-st.write(f"Mean Absolute Error (MAE): {mae:.4f}")
-st.write(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
-st.write(f"Mean Squared Error (MSE): {mse:.4f}")
-st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+    # Plotting actual vs predicted prices
+    fig, ax = plt.subplots(figsize=(15, 7))
+    ax.plot(data.index, data['Close'], color='blue', label='Actual Price')
+    ax.plot(test.index, y_pred, color='red', label='Predicted Price')
 
-# Plotting actual vs predicted prices
-fig, ax = plt.subplots(figsize=(15, 7))
-ax.plot(data.index, data['Close'], color='blue', label='Actual Price')
-ax.plot(test.index, y_pred, color='red', label='Predicted Price')
+    # Formatting the plot
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Stock Price (IDR)')
+    ax.set_title('ARIMA Model Stock Price Prediction', fontsize=20)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
+    plt.xticks(rotation=30)
+    ax.legend()
 
-# Formatting the plot
-ax.set_xlabel('Date')
-ax.set_ylabel('Stock Price (IDR)')
-ax.set_title('ARIMA Model Stock Price Prediction', fontsize=20)
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-plt.xticks(rotation=30)
-ax.legend()
-
-# Display the plot
-st.pyplot(fig)
-
+    # Display the plot
+    st.pyplot(fig)
 # LSTM Model
 elif model_type == "LSTM":
     st.subheader("LSTM Model Prediction")
