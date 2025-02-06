@@ -116,7 +116,7 @@ if model_choice == 'LSTM':
 
     # Plot the stock price prediction vs actual
     fig, ax = plt.subplots(figsize=(15, 7))
-    ax.plotax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
+    ax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
     ax.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')
     ax.set_xlabel('Tanggal')
     ax.set_ylabel('Harga Saham')
