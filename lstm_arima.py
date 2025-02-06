@@ -2,147 +2,112 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import yfinance as yf
+import pickle
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import pickle
-import tensorflow as tf
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, LSTM, Dropout
 from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from statsmodels.tsa.stattools import adfuller, acf, pacf
+from statsmodels.tsa.stattools import adfuller
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
-import warnings
-warnings.filterwarnings("ignore")
+from tensorflow.keras.models import load_model
 
-# Streamlit App
-st.title("Stock Price Prediction: ARIMA vs LSTM")
+def load_stock_data(symbol, start, end):
+    data = yf.download(symbol, start=start, end=end)
+    return data
 
-# Sidebar Inputs
-st.sidebar.header("Data Selection")
-stock_symbol = "BMRI.JK"
-start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2019-01-01"))
-end_date = st.sidebar.date_input("End Date", pd.to_datetime("2024-12-01"))
+def check_stationarity(series):
+    result = adfuller(series)
+    return result[1] < 0.05  # Return True if stationary, False if not
 
-# Load stock data
-data = yf.download(stock_symbol, start=start_date, end=end_date)
-data = data[['Close']].dropna()
+def train_arima_model(train_data):
+    model = ARIMA(train_data, order=(2,1,2))
+    model_fit = model.fit()
+    return model_fit
 
-# Sidebar Model Selection
-st.sidebar.header("Select Model")
-model_type = st.sidebar.selectbox("Prediction Model:", ["ARIMA", "LSTM"])
-
-# Plot historical stock data
-st.subheader("Historical Stock Prices")
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(data.index, data['Close'], label='Close Price', color='blue')
-ax.set_title("Historical Stock Prices")
-ax.set_xlabel("Date")
-ax.set_ylabel("Close Price (IDR)")
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-ax.legend()
-st.pyplot(fig)
-
-# ARIMA Model
-if model_type == "ARIMA":
-    st.subheader("ARIMA Model Prediction")
-    
-    def perform_dickey_fuller(series):
-        result = adfuller(series)
-        return result[1] < 0.05  # Returns True if stationary
-    
-    is_stationary = perform_dickey_fuller(data['Close'])
-    data_diff = data['Close'].diff().dropna() if not is_stationary else data['Close']
-    
-    train_size = int(len(data_diff) * 0.8)
-    train, test = data_diff[:train_size], data_diff[train_size:]
-    
-    try:
-        with open("arima_model_3.pkl", "rb") as f:
-            model_fit = pickle.load(f)
-    except:
-        model = ARIMA(train, order=(2,1,2))
-        model_fit = model.fit()
-        with open("arima_model_3.pkl", "wb") as f:
-            pickle.dump(model_fit, f)
-    
-    y_pred_diff = model_fit.forecast(steps=len(test))
-    y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
-    y_test = data['Close'].iloc[train_size:]
-    
-    min_len = min(len(y_test), len(y_pred))
-    y_test = y_test[:min_len]
-    y_pred = y_pred[:min_len]
-    
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-    
-    st.write("Mean Absolute Error (MAE):", round(mae, 4))
-    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
-    
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
-    ax.plot(test.index, y_pred, label='Predicted Price (ARIMA)', color='red')
-    ax.set_title("Stock Price Prediction - ARIMA")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Close Price (IDR)")
-    ax.legend()
-    st.pyplot(fig)
-
-# LSTM Model
-elif model_type == "LSTM":
-    st.subheader("LSTM Model Prediction")
-    
+def preprocess_data_for_lstm(data):
     scaler = MinMaxScaler()
-    data['Close_scaled'] = scaler.fit_transform(data[['Close']])
+    data_scaled = scaler.fit_transform(data[['Close']])
+    return data_scaled, scaler
+
+def prepare_lstm_data(data, look_back=1):
+    X, y = [], []
+    for i in range(len(data) - look_back):
+        X.append(data[i:(i + look_back)])
+        y.append(data[i + look_back])
+    X = np.array(X).reshape((len(X), 1, look_back))
+    y = np.array(y)
+    return X, y
+
+def main():
+    st.title("Stock Price Prediction Web App")
+    
+    st.sidebar.header("Stock Data Input")
+    stock_symbol = st.sidebar.text_input("Stock Symbol (e.g., BMRI.JK):", "BMRI.JK")
+    start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2019-01-01"))
+    end_date = st.sidebar.date_input("End Date", pd.to_datetime("2024-12-01"))
+    
+    data = load_stock_data(stock_symbol, start_date, end_date)
+    if data.empty:
+        st.error("Stock data not available. Check the stock symbol.")
+        return
+    
+    st.write("## Stock Data Preview")
+    st.write(data.head())
+    
+    # Plot stock prices
+    st.write("## Stock Price Over Time")
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(data.index, data['Close'], label='Close Price', color='blue')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Close Price (IDR)')
+    ax.set_title(f'{stock_symbol} Closing Price')
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    plt.xticks(rotation=30)
+    plt.legend()
+    st.pyplot(fig)
+    
+    # Select Model
+    model_type = st.sidebar.selectbox("Select Prediction Model", ["ARIMA", "LSTM"])
     
     train_size = int(len(data) * 0.8)
-    train, test = data['Close_scaled'][:train_size], data['Close_scaled'][train_size:]
+    train, test = data['Close'][:train_size], data['Close'][train_size:]
     
-    def create_sequences(data, look_back=1):
-        X, y = [], []
-        for i in range(len(data) - look_back):
-            X.append(data[i:(i + look_back)])
-            y.append(data[i + look_back])
-        return np.array(X), np.array(y)
+    if model_type == "ARIMA":
+        st.write("## ARIMA Model Training")
+        
+        if not check_stationarity(train):
+            train = train.diff().dropna()
+        
+        model_fit = train_arima_model(train)
+        
+        predictions = model_fit.forecast(steps=len(test))
+        predictions = data['Close'].iloc[train_size-1] + predictions.cumsum()
+        
+        st.write("### ARIMA Model Summary")
+        st.text(model_fit.summary())
+        
+    else:
+        st.write("## LSTM Model Training")
+        
+        data_scaled, scaler = preprocess_data_for_lstm(data)
+        X_train, y_train = prepare_lstm_data(data_scaled[:train_size])
+        X_test, y_test = prepare_lstm_data(data_scaled[train_size:])
+        
+        model = load_model("final_model_lstm.h5")
+        y_pred_scaled = model.predict(X_test)
+        predictions = scaler.inverse_transform(y_pred_scaled)
     
-    look_back = 60
-    X_train, y_train = create_sequences(train.values, look_back)
-    X_test, y_test = create_sequences(test.values, look_back)
-    X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
-    X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
-    
-    try:
-        lstm_model = load_model("lstm_model.h5")
-    except:
-        lstm_model = Sequential([
-            LSTM(128, input_shape=(look_back, 1), return_sequences=True),
-            Dropout(0.2),
-            LSTM(64),
-            Dropout(0.2),
-            Dense(32, activation='relu'),
-            Dense(1)
-        ])
-        lstm_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-        lstm_model.fit(X_train, y_train, epochs=50, validation_data=(X_test, y_test), verbose=0)
-        lstm_model.save("lstm_model.h5")
-    
-    y_pred = lstm_model.predict(X_test)
-    y_pred = scaler.inverse_transform(y_pred)
-    y_test = scaler.inverse_transform(y_test.reshape(-1, 1))
-    
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-    
-    st.write("Mean Absolute Error (MAE):", round(mae, 4))
-    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
-    
+    # Plot Predictions
+    st.write("## Stock Price Predictions")
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
-    ax.plot(test.index[look_back:], y_pred, label='Predicted Price (LSTM)', color='red')
-    ax.set_title("Stock Price Prediction - LSTM")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Close Price (IDR)")
-    ax.legend()
+    ax.plot(data.index[train_size+1:], predictions, label='Predicted Price', color='red')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Close Price (IDR)')
+    ax.set_title(f'{stock_symbol} Price Prediction - {model_type}')
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    plt.xticks(rotation=30)
+    plt.legend()
     st.pyplot(fig)
+    
+if __name__ == "__main__":
+    main()
