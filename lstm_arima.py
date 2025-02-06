@@ -48,12 +48,14 @@ st.pyplot(fig)
 if model_type == "ARIMA":
     st.subheader("ARIMA Model Prediction")
     
-    # Perform Dickey-Fuller Test
+    # Perform Dickey-Fuller Test to check for stationarity
     def check_stationarity(series):
         result = adfuller(series)
         return result[1] < 0.05  # Returns True if stationary
     
     is_stationary = check_stationarity(data['Close'])
+    
+    # Apply differencing to make the data stationary if needed
     if not is_stationary:
         data_diff = data['Close'].diff().dropna()
     else:
@@ -63,52 +65,35 @@ if model_type == "ARIMA":
     train_size = int(len(data_diff) * 0.8)
     train, test = data_diff[:train_size], data_diff[train_size:]
     
-    # Building the ARIMA model with optimized order (2,1,2)
-    model = ARIMA(train, order=(2, 1, 2))
-    model_fit = model.fit()
-
-    # Summary of ARIMA model
-    st.write("ARIMA Model Summary:")
-    st.text(model_fit.summary())
-
-    # Making predictions
-    y_pred_diff = model_fit.forecast(steps=len(test))
-    y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()  # Reverting the differencing
-    y_test = data['Close'].iloc[train_size:]
-
-    # Ensure both arrays have the same length
-    min_len = min(len(y_test), len(y_pred))
-    y_test = y_test[:min_len]
-    y_pred = y_pred[:min_len]
-
-    # Metrics for evaluation
+    # Fit ARIMA Model with order (2, 1, 2)
+    arima_model = ARIMA(train, order=(2, 1, 2))
+    arima_fit = arima_model.fit()
+    
+    # Forecast
+    y_pred_diff = arima_fit.forecast(steps=len(test))  # Predict the differenced values
+    
+    # Reverse differencing to get the actual price predictions
+    last_price = data['Close'].iloc[train_size - 1]  # Last price in training set
+    y_pred = last_price + np.cumsum(y_pred_diff)  # Add the cumulative sum of the differenced predictions to the last known price
+    y_test = data['Close'].iloc[train_size:].values  # Actual test data (prices)
+    
+    # Metrics
     mae = mean_absolute_error(y_test, y_pred)
-    mape = mean_absolute_percentage_error(y_test, y_pred)
-    mse = mean_squared_error(y_test, y_pred)
-    rmse = np.sqrt(mse)
-
-    # Displaying metrics in Streamlit
-    st.write(f"Mean Absolute Error (MAE): {mae:.4f}")
-    st.write(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
-    st.write(f"Mean Squared Error (MSE): {mse:.4f}")
-    st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
-
-    # Plotting actual vs predicted prices
-    fig, ax = plt.subplots(figsize=(15, 7))
-    ax.plot(data.index, data['Close'], color='blue', label='Actual Price')
-    ax.plot(test.index, y_pred, color='red', label='Predicted Price')
-
-    # Formatting the plot
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Stock Price (IDR)')
-    ax.set_title('ARIMA Model Stock Price Prediction', fontsize=20)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-    plt.xticks(rotation=30)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    
+    st.write("Mean Absolute Error (MAE):", round(mae, 4))
+    st.write("Root Mean Squared Error (RMSE):", round(rmse, 4))
+    
+    # Plot Predictions
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
+    ax.plot(data.index[train_size:], y_pred, label='Predicted Price (ARIMA)', color='red')
+    ax.set_title("Stock Price Prediction - ARIMA")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Close Price (IDR)")
     ax.legend()
-
-    # Display the plot
     st.pyplot(fig)
+
 # LSTM Model
 elif model_type == "LSTM":
     st.subheader("LSTM Model Prediction")
@@ -166,7 +151,7 @@ elif model_type == "LSTM":
     # Plot Predictions
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(data.index, data['Close'], label='Actual Price', color='blue')
-    ax.plot(test.index[look_back:], y_pred, label='Predicted Price (LSTM)', color='red')
+    ax.plot(data.index[train_size+look_back:], y_pred, label='Predicted Price (LSTM)', color='red')
     ax.set_title("Stock Price Prediction - LSTM")
     ax.set_xlabel("Date")
     ax.set_ylabel("Close Price (IDR)")
