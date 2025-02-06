@@ -89,4 +89,10 @@ predicted_prices = pd.DataFrame({
     'Date': test.index,
     'Predicted Price': y_pred
 })
+
+# Adding a column for price change (up or down)
+predicted_prices['Price Change'] = predicted_prices['Predicted Price'].diff().apply(lambda x: 'Up' if x > 0 else 'Down')
+
+# Displaying the table with the new column
 st.write(predicted_prices)
+
