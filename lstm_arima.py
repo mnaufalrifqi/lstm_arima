@@ -111,18 +111,18 @@ st.write(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
 st.write(f"Mean Squared Error (MSE): {mse:.4f}")
 st.write(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
 
-    # Plot predictions
-# Plot hasil prediksi
-st.subheader("Grafik Prediksi Harga Saham")
-
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(df.index, df["Close"], label="Harga Aktual", color="blue")
-ax.plot(test.index, y_pred, label="Harga Prediksi", color="red", linestyle="dashed")
+# Plot actual vs predicted
+st.subheader("Prediksi Harga Saham")
+fig, ax = plt.subplots(figsize=(15, 7))
+ax.plot(data.index, data['Close'], label='Harga Aktual', color='blue')
+ax.plot(test.index, y_pred, label='Harga Prediksi', color='red')
 ax.set_title("Prediksi Harga Saham dengan ARIMA")
-ax.set_xlabel("Tanggal")
+ax.set_xlabel("Waktu")
 ax.set_ylabel("Harga Saham")
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
 ax.legend()
-    st.pyplot(fig)
+st.pyplot(fig)
     
 
 # LSTM Model
