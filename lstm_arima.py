@@ -64,11 +64,11 @@ train_size = int(len(data_diff) * 0.8)
 train, test = data_diff[:train_size], data_diff[train_size:]
     
     # Fit ARIMA Model
-    arima_model = ARIMA(train, order=(2,2,2))
+    arima_model = ARIMA(train, order=(2,1,2))
     arima_fit = arima_model.fit()
     
     # Forecast
-    y_pred_diff = model_fit.forecast(steps=len(test))
+    y_pred_diff = arima_fit.forecast(steps=len(test))
 y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
 y_test = data['Close'].iloc[train_size:]
 print(y_pred)
