@@ -76,6 +76,11 @@ if model_type == "ARIMA":
     y_pred_diff = model_fit.forecast(steps=len(test))
     y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()  # Convert back to original price level
     y_test = data['Close'].iloc[train_size:]
+
+    # Ensure both arrays have the same length
+min_len = min(len(y_test), len(y_pred))
+y_test = y_test[:min_len]
+y_pred = y_pred[:min_len]
     
     # Calculate evaluation metrics
     mae = mean_absolute_error(y_test, y_pred)
