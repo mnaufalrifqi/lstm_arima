@@ -91,7 +91,7 @@ def plot_predictions():
     ax.set_ylabel("Close Price (IDR)")
     ax.legend()
     st.pyplot(fig)
-
+plot_predictions()
 
 # LSTM Model
 elif model_type == "LSTM":
