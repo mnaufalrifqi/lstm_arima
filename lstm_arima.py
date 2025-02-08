@@ -102,7 +102,7 @@ if model_choice == 'LSTM':
     
     # Show model summary in Streamlit
     st.subheader("LSTM Model Summary")
-    st.write(model.summary())
+    model.summary(print_fn=lambda x: st.text(x))
 
     # Visualize Loss and MAE during training
     fig_loss, ax_loss = plt.subplots(figsize=(10, 5))
