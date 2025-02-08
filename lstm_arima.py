@@ -75,6 +75,12 @@ if model_choice == 'LSTM':
     X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
     X_test = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
 
+    # Callbacks
+    class Callback(tf.keras.callbacks.Callback):
+        def on_epoch_end(self, epoch, logs={}):
+            if logs.get('val_mae') is not None and logs.get('val_mae') < 0.01:
+                self.model.stop_training = True
+    
     # Define LSTM model
     model = Sequential([
         LSTM(128, input_shape=(1, 1), return_sequences=True),
