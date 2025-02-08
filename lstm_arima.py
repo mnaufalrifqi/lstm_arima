@@ -294,7 +294,7 @@ elif model_choice == 'ARIMA':
     # Formatting the plot
     ax.set_xlabel('Waktu')
     ax.set_ylabel('Harga Saham')
-    ax.set_title('Prediksi Harga Saham BMRI)', fontsize=20)
+    ax.set_title('Prediksi Harga Saham BMRI'), fontsize=20)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
     plt.xticks(rotation=30)
@@ -311,7 +311,7 @@ elif model_choice == 'ARIMA':
     })
 
     # Adding a column for price change (up or down)
-    predicted_prices['Price Change'] = predicted_prices['Predicted Price'].diff().apply(lambda x: 'naik' if x > 0 else 'turun')
+    predicted_prices['Perubahan Tren'] = predicted_prices['Harga Prediksi'].diff().apply(lambda x: 'naik' if x > 0 else 'turun')
 
     # Displaying the table with the new column
-    st.write(predicted_prices)
+    st.write(Prediksi Harga Saham)
