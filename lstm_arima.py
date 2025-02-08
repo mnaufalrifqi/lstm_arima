@@ -28,19 +28,25 @@ data = yf.download("BMRI.JK", start="2019-12-01", end="2024-12-01")
 
 # Display initial Close price
 st.subheader("Initial Close Price (BMRI.JK)")
-st.write(f"Initial Close Price on 2019-12-01: Rp {data['Close'].iloc[0]:,.2f}")
 
-# Visualize initial Close price
-fig_initial_close, ax_initial_close = plt.subplots(figsize=(10, 5))
-ax_initial_close.plot(data.index, data['Close'], label='Harga Saham (Close)', color='blue')
-ax_initial_close.set_title('Initial Stock Price of BMRI.JK')
-ax_initial_close.set_xlabel('Tanggal')
-ax_initial_close.set_ylabel('Harga Saham (Rp)')
-ax_initial_close.legend()
-ax_initial_close.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # Date format on x-axis
-ax_initial_close.xaxis.set_major_locator(mdates.MonthLocator(interval=6))  # Label every 6 months
-plt.xticks(rotation=30)
-st.pyplot(fig_initial_close)
+# Create the plot
+plt.figure(figsize=(15, 7))
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))
+plt.plot(data.index, data['Close'], label='Close')
+
+# Labels and title
+plt.xlabel('Date')
+plt.ylabel('Price (Rp)')
+plt.title("Harga saham BMRI", fontsize=20)
+plt.legend()
+
+# Auto-format the x-axis dates
+plt.gcf().autofmt_xdate()
+
+# Show the plot in Streamlit
+st.pyplot(plt)
+
 
 # Data processing
 ms = MinMaxScaler()
