@@ -25,6 +25,24 @@ if model_choice == 'LSTM':
 
     # Download stock data
     data = yf.download("BMRI.JK", start="2019-12-01", end="2024-12-01")
+    # Create the plot
+plt.figure(figsize=(15, 7))
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))
+plt.plot(data.index, data['Close'], label='Close')
+
+# Labels and title
+plt.xlabel('Date')
+plt.ylabel('Price (Rp)')
+plt.title("Harga saham BMRI", fontsize=20)
+plt.legend()
+
+# Auto-format the x-axis dates
+plt.gcf().autofmt_xdate()
+
+# Show the plot in Streamlit
+st.pyplot(plt)
+
 
     # Data processing
     ms = MinMaxScaler()
@@ -69,6 +87,30 @@ if model_choice == 'LSTM':
 
     # Train model
     history = model.fit(X_train, y_train, epochs=100, validation_data=(X_test, y_test), callbacks=[EarlyStopping(patience=10)])
+
+st.write(model.summary())
+
+# Create the subplots
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
+
+# Plot Loss
+ax1.plot(history.history['loss'])
+ax1.plot(history.history['val_loss'])
+ax1.legend(['Loss', 'Val Loss'])
+ax1.set_xlabel('Epoch', fontsize=12)
+ax1.set_ylabel('Loss', fontsize=12)
+ax1.set_title('Loss', fontsize=20)
+
+# Plot MAE (Mean Absolute Error)
+ax2.plot(history.history['mae'])
+ax2.plot(history.history['val_mae'])
+ax2.legend(['MAE', 'Val MAE'])
+ax2.set_xlabel('Epoch', fontsize=12)
+ax2.set_ylabel('Mean Absolute Error', fontsize=12)
+ax2.set_title('Mean Absolute Error', fontsize=20)
+
+# Display the plot in Streamlit
+st.pyplot(fig)
 
     # Make predictions
     pred = model.predict(X_test)
