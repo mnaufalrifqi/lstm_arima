@@ -102,7 +102,7 @@ if model_choice == 'LSTM':
     
     # Show model summary in Streamlit
     st.subheader("LSTM Model Summary")
-    model.summary(print_fn=lambda x: st.text(x))
+    st.write(model.summary())
 
     # Visualize Loss and MAE during training
     fig_loss, ax_loss = plt.subplots(figsize=(10, 5))
@@ -192,7 +192,7 @@ if model_choice == 'LSTM':
     st.pyplot(fig)
 
     # Display prediction results in a table
-    st.subheader("Predicted Stock Prices with Change Direction")
+    st.subheader("Perubahan Harga Prediksi")
     st.write(predictions_df)
 
 elif model_choice == 'ARIMA':
@@ -310,8 +310,9 @@ elif model_choice == 'ARIMA':
         'Predicted Price': y_pred
     })
 
-     # Adding a column for price change (up or down)
-    predicted_prices['Perubahan Harga'] = predicted_prices['Harga Prediksi'].diff().apply(lambda x: 'naik' if x > 0 else 'turun')
+    # Adding a column for price change (up or down)
+    predicted_prices['Price Change'] = predicted_prices['Predicted Price'].diff().apply(lambda x: 'naik' if x > 0 else 'turun')
+
 
     # Displaying the table with the new column
     st.write(predicted_prices)
