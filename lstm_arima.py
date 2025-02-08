@@ -16,9 +16,9 @@ from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.stattools import adfuller
 
 # Streamlit UI for model selection
-st.title("Stock Price Prediction: ARIMA vs LSTM")
+st.title("Prediksi Harga Saham BMRI : ARIMA vs LSTM")
 
-model_choice = st.selectbox('Choose a model for prediction:', ['ARIMA', 'LSTM'])
+model_choice = st.selectbox('Pilih Model Prediksi:', ['ARIMA', 'LSTM'])
 
 if model_choice == 'LSTM':
     st.subheader("LSTM Model")
@@ -27,7 +27,7 @@ if model_choice == 'LSTM':
     data = yf.download("BMRI.JK", start="2019-12-01", end="2024-12-01")
 
     # Display initial Close price
-    st.subheader("Initial Close Price (BMRI.JK)")
+    st.subheader("Close Price Saham BMRI")
 
     # Create the plot
     plt.figure(figsize=(15, 7))
@@ -152,13 +152,18 @@ if model_choice == 'LSTM':
     mse = mean_squared_error(y_test, y_pred)
     rmse = np.sqrt(mse)
 
-    # Display metrics in Streamlit
-    st.subheader("Model Evaluation Metrics")
-    st.write(f"MAE: {mae:.2f}")
-    st.write(f"MAPE: {mape:.2f}")
-    st.write(f"MSE: {mse:.2f}")
-    st.write(f"RMSE: {rmse:.2f}")
+    # Displaying metrics in Streamlit
+    metrics = {
+        'MAE': mae,
+        'MAPE': mape,
+        'MSE': mse,
+        'RMSE': rmse
+    }
 
+    st.subheader('Evaluation Metrics')
+    for metric, value in metrics.items():
+        st.write(f"{metric}: {value:.4f}")
+        
     # Visualize the comparison of actual vs predicted stock prices
     fig = plt.figure(figsize=(15, 7))
     plt.plot(data.index, data['Close'], color='blue', label='Harga Aktual')  # Plot actual prices (entire data)
@@ -197,12 +202,12 @@ elif model_choice == 'ARIMA':
     data = stock_data[['Close']].dropna()
 
     # Streamlit display of the original data
-    st.subheader('Original Data')
+    st.subheader('Close Price Saham BMRI')
 
     # Plot original data in Streamlit
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data.index, data['Close'], color='blue', label='Original Data')
-    ax.set_title('Original Data')
+    ax.plot(data.index, data['Close'], color='blue', label='Close')
+    ax.set_title('Harga Saham BMRI')
     ax.set_xlabel('Date')
     ax.set_ylabel('Close Price')
     ax.legend()
@@ -290,7 +295,7 @@ elif model_choice == 'ARIMA':
     # Formatting the plot
     ax.set_xlabel('Waktu')
     ax.set_ylabel('Harga Saham')
-    ax.set_title('Prediksi Harga Saham dengan ARIMA (Optimized)', fontsize=20)
+    ax.set_title('Prediksi Harga Saham BMRI)', fontsize=20)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
     plt.xticks(rotation=30)
@@ -300,7 +305,7 @@ elif model_choice == 'ARIMA':
     st.pyplot(fig)
 
     # Displaying predictions in a table
-    st.subheader("Predicted Stock Prices with Change Direction")
+    st.subheader("Prediksi Harga Saham BMRI")
     predicted_prices = pd.DataFrame({
         'Date': test.index,
         'Predicted Price': y_pred
