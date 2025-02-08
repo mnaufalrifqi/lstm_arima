@@ -70,30 +70,6 @@ if model_choice == 'LSTM':
     # Train model
     history = model.fit(X_train, y_train, epochs=100, validation_data=(X_test, y_test), callbacks=[EarlyStopping(patience=10)])
 
-st.write(model.summary())
-
-# Create the subplots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
-
-# Plot Loss
-ax1.plot(history.history['loss'])
-ax1.plot(history.history['val_loss'])
-ax1.legend(['Loss', 'Val Loss'])
-ax1.set_xlabel('Epoch', fontsize=12)
-ax1.set_ylabel('Loss', fontsize=12)
-ax1.set_title('Loss', fontsize=20)
-
-# Plot MAE (Mean Absolute Error)
-ax2.plot(history.history['mae'])
-ax2.plot(history.history['val_mae'])
-ax2.legend(['MAE', 'Val MAE'])
-ax2.set_xlabel('Epoch', fontsize=12)
-ax2.set_ylabel('Mean Absolute Error', fontsize=12)
-ax2.set_title('Mean Absolute Error', fontsize=20)
-
-# Display the plot in Streamlit
-st.pyplot(fig)
-
     # Make predictions
     pred = model.predict(X_test)
     y_pred = np.array(pred).reshape(-1)
@@ -132,6 +108,28 @@ st.pyplot(fig)
     mse = mean_squared_error(y_test, y_pred)
     rmse = np.sqrt(mse)
 
+    # Create a Streamlit title
+st.subheader("Stock Price Prediction (BMRI.JK)")
+
+# Plot training and validation loss
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(history.history['loss'], label='Training Loss')
+ax.plot(history.history['val_loss'], label='Validation Loss')
+ax.set_title('Training and Validation Loss')
+ax.set_xlabel('Epochs')
+ax.set_ylabel('Loss (MSE)')
+ax.legend()
+st.pyplot(fig)
+
+# Plot training and validation MAE
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(history.history['mae'], label='Training MAE')
+ax.plot(history.history['val_mae'], label='Validation MAE')
+ax.set_title('Training and Validation Mean Absolute Error (MAE)')
+ax.set_xlabel('Epochs')
+ax.set_ylabel('MAE')
+ax.legend()
+st.pyplot(fig)
     st.subheader("Model Evaluation Metrics")
     st.write(f"MAE: {mae:.2f}")
     st.write(f"MAPE: {mape:.2f}")
