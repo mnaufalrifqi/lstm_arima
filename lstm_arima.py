@@ -85,15 +85,14 @@ if model_choice == 'LSTM':
         Dense(1)
     ])
 
-    # Show model summary in Streamlit
-    st.subheader("LSTM Model Summary")
-    model.summary(print_fn=lambda x: st.text(x))
-
     # Compile model
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
     # Train model
-    history = model.fit(X_train, y_train, epochs=100, validation_data=(X_test, y_test), callbacks=[EarlyStopping(patience=10)])
+    history = model.fit(X_train, y_train, epochs=100, validation_data=(X_test, y_test), callbacks=[callbacks])
+    # Show model summary in Streamlit
+    st.subheader("LSTM Model Summary")
+    model.summary(print_fn=lambda x: st.text(x))
 
     # Visualize Loss and MAE during training
     fig_loss, ax_loss = plt.subplots(figsize=(10, 5))
