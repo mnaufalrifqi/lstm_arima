@@ -314,4 +314,4 @@ elif model_choice == 'ARIMA':
     predicted_prices['Perubahan Tren'] = predicted_prices['Harga Prediksi'].diff().apply(lambda x: 'naik' if x > 0 else 'turun')
 
     # Displaying the table with the new column
-    st.write(Prediksi Harga Saham)
+    st.write("Prediksi Harga Saham")
