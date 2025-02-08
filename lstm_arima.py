@@ -162,7 +162,7 @@ if model_choice == 'LSTM':
     rmse = 0.02643629990716764
 
     # Menampilkan metrik evaluasi secara manual menggunakan st.metric
-    st.title("Evaluasi Model")
+    st.subheader("Evaluasi Model")
     st.metric("MAE (Mean Absolute Error)", f"{mae:.4f}")
     st.metric("MAPE (Mean Absolute Percentage Error)", f"{mape:.4f}")
     st.metric("MSE (Mean Squared Error)", f"{mse:.7f}")
