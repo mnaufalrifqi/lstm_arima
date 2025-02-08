@@ -25,24 +25,6 @@ if model_choice == 'LSTM':
 
     # Download stock data
     data = yf.download("BMRI.JK", start="2019-12-01", end="2024-12-01")
-    # Create the plot
-plt.figure(figsize=(15, 7))
-plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-plt.plot(x_dates, data['Close'], label='Close')
-
-# Labels and title
-plt.xlabel('Date')
-plt.ylabel('Price (Rp)')
-plt.title("Harga saham BMRI", fontsize=20)
-plt.legend()
-
-# Auto-format the x-axis dates
-plt.gcf().autofmt_xdate()
-
-# Show the plot in Streamlit
-st.pyplot(plt)
-
 
     # Data processing
     ms = MinMaxScaler()
