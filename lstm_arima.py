@@ -29,7 +29,7 @@ if model_choice == 'LSTM':
 plt.figure(figsize=(15, 7))
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-plt.plot(data.index, data['Close'], label='Close')
+plt.plot(x_dates, data['Close'], label='Close')
 
 # Labels and title
 plt.xlabel('Date')
