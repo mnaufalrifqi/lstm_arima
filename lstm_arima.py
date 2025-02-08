@@ -294,7 +294,7 @@ elif model_choice == 'ARIMA':
     # Formatting the plot
     ax.set_xlabel('Waktu')
     ax.set_ylabel('Harga Saham')
-    ax.set_title('Prediksi Harga Saham BMRI'), fontsize=20)
+    ax.set_title("Prediksi Harga Saham BMRI", fontsize=20)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
     plt.xticks(rotation=30)
