@@ -24,144 +24,162 @@ if model_choice == 'LSTM':
     st.subheader("LSTM Model")
 
     # Download stock data
-    data = yf.download("BMRI.JK", start="2019-12-01", end="2024-12-01")
+data = yf.download("BMRI.JK", start="2019-12-01", end="2024-12-01")
 
-    # Data processing
-    ms = MinMaxScaler()
-    data['Close_ms'] = ms.fit_transform(data[['Close']])
+# Display initial Close price
+st.subheader("Initial Close Price (BMRI.JK)")
+st.write(f"Initial Close Price on 2019-12-01: Rp {data['Close'].iloc[0]:,.2f}")
 
-    # Split data into training and testing
-    def split_data(data, train_size):
-        size = int(len(data) * train_size)
-        train, test = data.iloc[0:size], data.iloc[size:]
-        return train, test
+# Visualize initial Close price
+fig_initial_close, ax_initial_close = plt.subplots(figsize=(10, 5))
+ax_initial_close.plot(data.index, data['Close'], label='Harga Saham (Close)', color='blue')
+ax_initial_close.set_title('Initial Stock Price of BMRI.JK')
+ax_initial_close.set_xlabel('Tanggal')
+ax_initial_close.set_ylabel('Harga Saham (Rp)')
+ax_initial_close.legend()
+ax_initial_close.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # Date format on x-axis
+ax_initial_close.xaxis.set_major_locator(mdates.MonthLocator(interval=6))  # Label every 6 months
+plt.xticks(rotation=30)
+st.pyplot(fig_initial_close)
 
-    train, test = split_data(data['Close_ms'], 0.8)
+# Data processing
+ms = MinMaxScaler()
+data['Close_ms'] = ms.fit_transform(data[['Close']])
 
-    # Split into X and Y
-    def split_target(data, look_back=1):
-        X, y = [], []
-        for i in range(len(data) - look_back):
-            a = data[i:(i + look_back)]
-            X.append(a)
-            y.append(data[i + look_back])
-        return np.array(X), np.array(y)
+# Split data into training and testing
+def split_data(data, train_size):
+    size = int(len(data) * train_size)
+    train, test = data.iloc[0:size], data.iloc[size:]
+    return train, test
 
-    X_train, y_train = split_target(train.values.reshape(len(train), 1))
-    X_test, y_test = split_target(test.values.reshape(len(test), 1))
+train, test = split_data(data['Close_ms'], 0.8)
 
-    # Reshape X for LSTM
-    X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
-    X_test = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
+# Split into X and Y
+def split_target(data, look_back=1):
+    X, y = [], []
+    for i in range(len(data) - look_back):
+        a = data[i:(i + look_back)]
+        X.append(a)
+        y.append(data[i + look_back])
+    return np.array(X), np.array(y)
 
-    # Define LSTM model
-    model = Sequential([
-        LSTM(128, input_shape=(1, 1), return_sequences=True),
-        Dropout(0.2),
-        LSTM(64),
-        Dropout(0.2),
-        Dense(32, activation='relu'),
-        Dense(1)
-    ])
+X_train, y_train = split_target(train.values.reshape(len(train), 1))
+X_test, y_test = split_target(test.values.reshape(len(test), 1))
 
-    # Compile model
-    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+# Reshape X for LSTM
+X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
+X_test = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
 
-    # Train model
-    history = model.fit(X_train, y_train, epochs=100, validation_data=(X_test, y_test), callbacks=[EarlyStopping(patience=10)])
+# Define LSTM model
+model = Sequential([
+    LSTM(128, input_shape=(1, 1), return_sequences=True),
+    Dropout(0.2),
+    LSTM(64),
+    Dropout(0.2),
+    Dense(32, activation='relu'),
+    Dense(1)
+])
 
-    # Make predictions
-    pred = model.predict(X_test)
-    y_pred = np.array(pred).reshape(-1)
+# Show model summary in Streamlit
+st.subheader("LSTM Model Summary")
+model.summary(print_fn=lambda x: st.text(x))
 
-    # Inverse transform to get original scale
-    y_pred_original = ms.inverse_transform(y_pred.reshape(-1, 1)).flatten()
+# Compile model
+model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
-    # Calculate percentage changes and directions
-    percentage_changes = []
-    directions = []
-    for i in range(1, len(y_pred_original)):
-        prev = y_pred_original[i - 1]
-        curr = y_pred_original[i]
-        change = ((curr - prev) / prev) * 100
-        percentage_changes.append(change)
-        directions.append("Naik" if change > 0 else "Turun")
+# Train model
+history = model.fit(X_train, y_train, epochs=100, validation_data=(X_test, y_test), callbacks=[EarlyStopping(patience=10)])
 
-    # Sync data
-    min_length = min(len(test.index[1:]), len(y_pred_original[1:]), len(percentage_changes))
-    sync_tanggal = test.index[1:][:min_length]
-    sync_harga_prediksi = y_pred_original[1:][:min_length]
-    sync_percentage_changes = percentage_changes[:min_length]
-    sync_directions = directions[:min_length]
+# Visualize Loss and MAE during training
+fig_loss, ax_loss = plt.subplots(figsize=(10, 5))
+ax_loss.plot(history.history['loss'], label='Training Loss')
+ax_loss.plot(history.history['val_loss'], label='Validation Loss')
+ax_loss.set_title('Training and Validation Loss')
+ax_loss.set_xlabel('Epochs')
+ax_loss.set_ylabel('Loss (MSE)')
+ax_loss.legend()
+st.pyplot(fig_loss)
 
-    # Prepare results for display
-    predictions_df = pd.DataFrame({
-        'Tanggal': sync_tanggal,
-        'Harga Prediksi': sync_harga_prediksi,
-        'Persentase Perubahan': sync_percentage_changes,
-        'Tren': sync_directions
-    })
+fig_mae, ax_mae = plt.subplots(figsize=(10, 5))
+ax_mae.plot(history.history['mae'], label='Training MAE')
+ax_mae.plot(history.history['val_mae'], label='Validation MAE')
+ax_mae.set_title('Training and Validation Mean Absolute Error (MAE)')
+ax_mae.set_xlabel('Epochs')
+ax_mae.set_ylabel('MAE')
+ax_mae.legend()
+st.pyplot(fig_mae)
 
-    # Display metrics
-    mae = mean_absolute_error(y_test, y_pred)
-    mape = mean_absolute_percentage_error(y_test, y_pred)
-    mse = mean_squared_error(y_test, y_pred)
-    rmse = np.sqrt(mse)
+# Make predictions
+pred = model.predict(X_test)
+y_pred = np.array(pred).reshape(-1)
 
-    # Create a Streamlit title
-st.subheader("Stock Price Prediction (BMRI.JK)")
+# Inverse transform to get original scale
+y_pred_original = ms.inverse_transform(y_pred.reshape(-1, 1)).flatten()
 
-# Plot training and validation loss
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(history.history['loss'], label='Training Loss')
-ax.plot(history.history['val_loss'], label='Validation Loss')
-ax.set_title('Training and Validation Loss')
-ax.set_xlabel('Epochs')
-ax.set_ylabel('Loss (MSE)')
-ax.legend()
+# Calculate percentage changes and directions
+percentage_changes = []
+directions = []
+for i in range(1, len(y_pred_original)):
+    prev = y_pred_original[i - 1]
+    curr = y_pred_original[i]
+    change = ((curr - prev) / prev) * 100
+    percentage_changes.append(change)
+    directions.append("Naik" if change > 0 else "Turun")
+
+# Sync data
+min_length = min(len(test.index[1:]), len(y_pred_original[1:]), len(percentage_changes))
+sync_tanggal = test.index[1:][:min_length]
+sync_harga_prediksi = y_pred_original[1:][:min_length]
+sync_percentage_changes = percentage_changes[:min_length]
+sync_directions = directions[:min_length]
+
+# Prepare results for display
+predictions_df = pd.DataFrame({
+    'Tanggal': sync_tanggal,
+    'Harga Prediksi': sync_harga_prediksi,
+    'Persentase Perubahan': sync_percentage_changes,
+    'Tren': sync_directions
+})
+
+# Display metrics
+mae = mean_absolute_error(y_test, y_pred)
+mape = mean_absolute_percentage_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+
+# Display metrics in Streamlit
+st.subheader("Model Evaluation Metrics")
+st.write(f"MAE: {mae:.2f}")
+st.write(f"MAPE: {mape:.2f}")
+st.write(f"MSE: {mse:.2f}")
+st.write(f"RMSE: {rmse:.2f}")
+
+# Visualize the comparison of actual vs predicted stock prices
+fig = plt.figure(figsize=(15, 7))
+plt.plot(data.index, data['Close'], color='blue', label='Harga Aktual')  # Plot actual prices (entire data)
+plt.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')  # Plot predicted prices (test data)
+
+# Set labels and title
+plt.xlabel('Waktu')
+plt.ylabel('Harga Saham')
+plt.title('Prediksi Harga Saham BMRI LSTM', fontsize=20)
+
+# Format x-axis for dates
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # Date format on x-axis
+plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))    # Show label every 12 months
+
+# Rotate x-axis labels for better readability
+plt.xticks(rotation=30)
+
+# Add legend to distinguish between actual and predicted lines
+plt.legend()
+
+# Display the plot in Streamlit
 st.pyplot(fig)
 
-# Plot training and validation MAE
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(history.history['mae'], label='Training MAE')
-ax.plot(history.history['val_mae'], label='Validation MAE')
-ax.set_title('Training and Validation Mean Absolute Error (MAE)')
-ax.set_xlabel('Epochs')
-ax.set_ylabel('MAE')
-ax.legend()
-st.pyplot(fig)
-    st.write("Model Evaluation Metrics")
-    st.write(f"MAE: {mae:.2f}")
-    st.write(f"MAPE: {mape:.2f}")
-    st.write(f"MSE: {mse:.2f}")
-    st.write(f"RMSE: {rmse:.2f}")
-
-    # Visualize the comparison of actual vs predicted stock prices in Streamlit
-    fig = plt.figure(figsize=(15, 7))
-    plt.plot(data.index, data['Close'], color='blue', label='Harga Aktual')  # Plot actual prices (entire data)
-    plt.plot(test.index[:-1], y_pred_original, color='red', label='Harga Prediksi')  # Plot predicted prices (test data)
-
-    # Set labels and title
-    plt.xlabel('Waktu')
-    plt.ylabel('Harga Saham')
-    plt.title('Prediksi Harga Saham BMRI LSTM', fontsize=20)
-
-    # Format x-axis for dates
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # Date format on x-axis
-    plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))    # Show label every 12 months
-
-    # Rotate x-axis labels for better readability
-    plt.xticks(rotation=30)
-
-    # Add legend to distinguish between actual and predicted lines
-    plt.legend()
-
-    # Display the plot in Streamlit
-    st.pyplot(fig)
-
-    # Display prediction results in a table
-    st.subheader("Predicted Stock Prices with Change Direction")
-    st.write(predictions_df)
+# Display prediction results in a table
+st.subheader("Predicted Stock Prices with Change Direction")
+st.write(predictions_df)
 
 elif model_choice == 'ARIMA':
     st.subheader("ARIMA Model")
