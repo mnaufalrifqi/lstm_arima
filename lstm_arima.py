@@ -216,44 +216,98 @@ elif model_choice == 'ARIMA':
         st.write(f"p-value: {result[1]:.4f}")
         st.write("Critical Values:")
         for key, value in result[4].items():
-            st.write(f"\t{key}: {value:.4f}")
-        return result
+            st.write(f"   {key}: {value:.4f}")
+        if result[1] > 0.05:
+            st.write("The data is not stationary.")
+        else:
+            st.write("The data is stationary.")
 
-    adf_result = perform_dickey_fuller(data['Close'])
-    st.write("ADF Test Result: ", adf_result)
+    perform_dickey_fuller(data['Close'])
 
-    # Fit ARIMA model
-    def fit_arima_model(data, order=(5,1,0)):
-        model = ARIMA(data, order=order)
-        model_fit = model.fit()
-        st.write(model_fit.summary())
-        return model_fit
+    # Check for stationarity and apply differencing if necessary
+    adf_test = adfuller(data['Close'])
+    p_value = adf_test[1]
 
-    # Fit model and display results
-    arima_model = fit_arima_model(data['Close'])
+    if p_value > 0.05:
+        st.write("Data tidak stasioner, melakukan differencing...")
+        data_diff = data['Close'].diff().dropna()  # First differencing
+        perform_dickey_fuller(data_diff)
+    else:
+        st.write("Data sudah stasioner.")
+        data_diff = data['Close']
 
-    # Plot diagnostics
-    st.subheader("ARIMA Model Diagnostics")
-    arima_model.plot_diagnostics(figsize=(12, 8))
-    st.pyplot()
-
-    # Make predictions
-    forecast_steps = 30
-    forecast = arima_model.forecast(steps=forecast_steps)
-    forecast_index = pd.date_range(data.index[-1], periods=forecast_steps + 1, freq='B')[1:]
-    forecast_df = pd.DataFrame(forecast, index=forecast_index, columns=['Forecast'])
-
-    # Display forecast in Streamlit
-    st.subheader("Forecasted Prices")
-    st.write(forecast_df)
-
-    # Plot forecasted prices
+    # Plot differenced data
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(data.index, data['Close'], color='blue', label='Historical Data')
-    ax.plot(forecast_df.index, forecast_df['Forecast'], color='red', label='Forecasted Data')
-    ax.set_title('ARIMA Model Forecast')
+    ax.plot(data_diff.index, data_diff, color='orange', label='Differenced Data')
+    ax.set_title('Differenced Data')
     ax.set_xlabel('Date')
-    ax.set_ylabel('Close Price')
+    ax.set_ylabel('Differenced Close Price')
     ax.legend()
     st.pyplot(fig)
 
+    # Splitting the dataset into training and testing sets
+    train_size = int(len(data_diff) * 0.8)
+    train, test = data_diff[:train_size], data_diff[train_size:]
+
+    # Building the ARIMA model with optimized order
+    model = ARIMA(train, order=(2,1,2))
+    model_fit = model.fit()
+    st.write(model_fit.summary())
+
+    # Making predictions
+    y_pred_diff = model_fit.forecast(steps=len(test))
+    y_pred = data['Close'].iloc[train_size-1] + y_pred_diff.cumsum()
+    y_test = data['Close'].iloc[train_size:]
+
+    # Ensure both arrays have the same length
+    min_len = min(len(y_test), len(y_pred))
+    y_test = y_test[:min_len]
+    y_pred = y_pred[:min_len]
+
+    # Metrics for evaluation
+    mae = mean_absolute_error(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
+
+    # Displaying metrics in Streamlit
+    metrics = {
+        'MAE': mae,
+        'MAPE': mape,
+        'MSE': mse,
+        'RMSE': rmse
+    }
+
+    st.subheader('Evaluation Metrics')
+    for metric, value in metrics.items():
+        st.write(f"{metric}: {value:.4f}")
+
+    # Plotting actual vs predicted prices
+    fig, ax = plt.subplots(figsize=(15, 7))
+    ax.plot(data.index, data['Close'], color='blue', label='Harga Aktual')
+    ax.plot(test.index, y_pred, color='red', label='Harga Prediksi')
+
+    # Formatting the plot
+    ax.set_xlabel('Waktu')
+    ax.set_ylabel('Harga Saham')
+    ax.set_title('Prediksi Harga Saham dengan ARIMA (Optimized)', fontsize=20)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=12))
+    plt.xticks(rotation=30)
+    ax.legend()
+
+    # Displaying the plot in Streamlit
+    st.pyplot(fig)
+
+    # Displaying predictions in a table
+    st.subheader("Predicted Stock Prices with Change Direction")
+    predicted_prices = pd.DataFrame({
+        'Date': test.index,
+        'Predicted Price': y_pred
+    })
+
+    # Adding a column for price change (up or down)
+    predicted_prices['Price Change'] = predicted_prices['Predicted Price'].diff().apply(lambda x: 'naik' if x > 0 else 'turun')
+
+    # Displaying the table with the new column
+    st.write(predicted_prices)
